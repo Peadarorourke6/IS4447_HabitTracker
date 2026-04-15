@@ -1,98 +1,239 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useContext, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { AppContext } from '../_layout';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function HabitsScreen() {
+  const context = useContext(AppContext);
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
-export default function HomeScreen() {
+  if (!context) return null;
+  const { habits, categories } = context;
+
+  const getCategoryName = (categoryId: number) => {
+    const cat = categories.find(c => c.id === categoryId);
+    return cat ? cat.name : 'Uncategorised';
+  };
+
+  const filtered = habits.filter(h => {
+    const matchesSearch = h.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === null || h.categoryId === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>My Habits</Text>
+        <View style={styles.headerButtons}>
+          <Pressable
+            style={styles.profileButton}
+            onPress={() => router.push('/profile')}
+            accessibilityLabel="View profile"
+          >
+            <Text style={styles.profileButtonText}>👤</Text>
+          </Pressable>
+          <Pressable
+            style={styles.targetsButton}
+            onPress={() => router.push('/targets')}
+            accessibilityLabel="View targets"
+          >
+            <Text style={styles.targetsButtonText}>🎯 Targets</Text>
+          </Pressable>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => router.push('/add-habit')}
+            accessibilityLabel="Add new habit"
+          >
+            <Text style={styles.addButtonText}>+ Add</Text>
+          </Pressable>
+        </View>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.searchBar}>
+        <TextInput
+          placeholder="🔍  Search habits..."
+          value={search}
+          onChangeText={setSearch}
+          style={styles.searchInput}
+          accessibilityLabel="Search habits"
+        />
+      </View>
+
+      <View style={styles.filterRow}>
+        <Pressable
+          style={[styles.filterChip, selectedCategory === null && styles.filterChipActive]}
+          onPress={() => setSelectedCategory(null)}
+        >
+          <Text style={[styles.filterChipText, selectedCategory === null && styles.filterChipTextActive]}>
+            All
+          </Text>
+        </Pressable>
+        {categories.map(cat => (
+          <Pressable
+            key={cat.id}
+            style={[
+              styles.filterChip,
+              selectedCategory === cat.id && { backgroundColor: cat.colour, borderColor: cat.colour },
+            ]}
+            onPress={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+            accessibilityLabel={`Filter by ${cat.name}`}
+          >
+            <Text style={[
+              styles.filterChipText,
+              selectedCategory === cat.id && styles.filterChipTextActive,
+            ]}>
+              {cat.name}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {filtered.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>{habits.length === 0 ? '🌱' : '🔍'}</Text>
+          <Text style={styles.emptyTitle}>
+            {habits.length === 0 ? 'No habits yet!' : 'No results found'}
+          </Text>
+          <Text style={styles.emptySubtext}>
+            {habits.length === 0
+              ? 'Tap "+ Add" to create your first habit and start tracking.'
+              : 'Try a different search or category filter.'}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ padding: 16 }}
+          renderItem={({ item }) => (
+            <Pressable
+              style={({ pressed }) => [
+                styles.card,
+                { borderLeftColor: item.colour },
+                pressed && styles.cardPressed,
+              ]}
+              onPress={() => router.push(`/habit/${item.id}`)}
+              accessibilityLabel={`${item.name}, ${getCategoryName(item.categoryId)}, tap to view details`}
+              accessibilityRole="button"
+            >
+              <View style={[styles.colourDot, { backgroundColor: item.colour }]} />
+              <View style={styles.cardContent}>
+                <Text style={styles.habitName}>{item.name}</Text>
+                <Text style={styles.categoryName}>
+                  {getCategoryName(item.categoryId)}
+                </Text>
+              </View>
+              <Text style={styles.arrow}>›</Text>
+            </Pressable>
+          )}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  title: { fontSize: 28, fontWeight: '800', color: '#1a1a1a' },
+  headerButtons: { flexDirection: 'row', gap: 8 },
+  profileButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E63946',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  profileButtonText: { fontSize: 16 },
+  targetsButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E63946',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  targetsButtonText: { color: '#E63946', fontWeight: '700', fontSize: 13 },
+  addButton: {
+    backgroundColor: '#E63946',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  searchBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+  },
+  searchInput: {
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 15,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+  },
+  filterChipActive: { backgroundColor: '#E63946', borderColor: '#E63946' },
+  filterChipText: { fontSize: 13, fontWeight: '600', color: '#666' },
+  filterChipTextActive: { color: '#fff' },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    borderLeftWidth: 5,
+    elevation: 2,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  cardPressed: { opacity: 0.85 },
+  colourDot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
+  cardContent: { flex: 1 },
+  habitName: { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
+  categoryName: { fontSize: 13, color: '#666', marginTop: 3 },
+  arrow: { fontSize: 22, color: '#ccc' },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  emptyIcon: { fontSize: 60, marginBottom: 16 },
+  emptyTitle: { fontSize: 22, fontWeight: '800', color: '#1a1a1a', marginBottom: 8 },
+  emptySubtext: { fontSize: 15, color: '#666', textAlign: 'center', lineHeight: 22 },
 });
