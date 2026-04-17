@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -16,6 +17,12 @@ export default function HabitsScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('loggedIn').then(val => {
+      if (val !== 'true') router.replace('/login');
+    });
+  }, []);
 
   if (!context) return null;
   const { habits, categories } = context;
