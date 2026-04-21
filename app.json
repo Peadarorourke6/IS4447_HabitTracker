@@ -38,11 +38,25 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "efc43681-94da-4a3f-8af0-f6d91b8f5f00"
+      }
+    },
+    "owner": "peadar77",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/efc43681-94da-4a3f-8af0-f6d91b8f5f00"
     }
   }
 }
