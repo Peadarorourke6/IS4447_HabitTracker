@@ -53,5 +53,14 @@
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+"jest": {
+  "testEnvironment": "node",
+  "testMatch": ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"],
+  "transform": {
+    "^.+\\.(ts|tsx)$": "babel-jest"
+  }
 }
+}
+  
+
